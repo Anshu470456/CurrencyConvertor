@@ -1,117 +1,164 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
+import React, { useState } from 'react';
+
 import {
+  FlatList,
+  Pressable,
   SafeAreaView,
-  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
-  useColorScheme,
+  TextInput,
   View,
+  YellowBox,
 } from 'react-native';
+//constant
+import { currencyByRupee } from './src/constant';
+import CurrencyButton from './src/component/CurrencyButton';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+import Snackbar from 'react-native-snackbar';
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
 
 function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
+  const [inputValue, setInputValue] = useState('');
+  const [resultValue, setResultValue] = useState('');
+  const [targetCurrency, setTargetCurrency] = useState('');
+
+  const buttonPressed = (targetValue: Currency) => {
+
+    if (!inputValue) {
+      return Snackbar.show({
+        text: "Enter a value to convert",
+        backgroundColor: "lightblue",
+        textColor: "#000000",
+        duration: Snackbar.LENGTH_SHORT,
+      })
+    }
+
+    const inputAmount = parseFloat(inputValue);
+    
+    if (!isNaN(inputAmount)) {
+
+      const convertedValue = inputAmount * targetValue.value
+      const result = `${targetValue.symbol} ${convertedValue.toFixed(2)}`
+      setResultValue(result)
+      setTargetCurrency(targetValue.name)
+    } 
+    else {
+
+      return Snackbar.show({
+        text: "Not a valid number to convert",
+        backgroundColor: "#F4BE2C",
+        textColor: "#000000",
+        
+      })
+    }
+  }
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
+    <SafeAreaView  style={{height:'100%'}}>
+      <StatusBar />
+      <View style={styles.container}>
+        <View style={styles.topContainer}>
+          <View style={styles.rupeesContainer}>
+            <Text style={styles.rupee}>₹</Text>
+            <TextInput
+              maxLength={14}
+              value={inputValue}
+              onChangeText={setInputValue}
+              keyboardType='number-pad'
+              placeholder='Enter the amount in Rupees'
+              keyboardAppearance="dark"
+              cursorColor='#fff8dc'
+            />
+          </View>
+          {resultValue && (
+            <Text style={[styles.rupeesContainer,{fontSize:20,fontWeight:'600'}]}>{resultValue}</Text>
+          )}
+        </View >
+
+        <View style={styles.bottomContainer}>
+           
+           <FlatList 
+           numColumns={2}
+           data={currencyByRupee}
+           keyExtractor={item=>item.name}
+           renderItem={({item})=>(
+            <Pressable
+            style={[
+              styles.button, 
+              targetCurrency === item.name && styles.selected
+            ]}
+            onPress={() => buttonPressed(item)}
+            >
+              <CurrencyButton {...item} />
+            </Pressable>
+           )}
+           />
         </View>
-      </ScrollView>
+
+      </View>
+
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  container: {
+    flex: 1,
+    backgroundColor: 'lightgrey',
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
+  topContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'space-evenly',
   },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
+  resultTxt: {
+    fontSize: 32,
+    color: '#000000',
+    fontWeight: '800',
   },
-  highlight: {
-    fontWeight: '700',
+  rupee: {
+    marginRight: 8,
+    fontSize: 25,
+    color: '#000000',
+    fontWeight: '800',
+  },
+  rupeesContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor:'white',
+    borderRadius:8,
+  },
+  inputAmountField: {
+    height: 40,
+    width: 200,
+    padding: 8,
+    borderWidth: 1,
+    borderRadius: 4,
+    backgroundColor: '#FFFFFF',
+  },
+  bottomContainer: {
+    flex: 3,
+  },
+  button: {
+    flex: 1,
+    margin: 12,
+    height: 60,
+    borderRadius: 12,
+    backgroundColor: '#fff',
+    elevation: 2,
+    shadowOffset: {
+      width: 1,
+      height: 1,
+    },
+    shadowColor: '#333',
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+  },
+  selected: {
+    backgroundColor: '#ffeaa7',
   },
 });
 
